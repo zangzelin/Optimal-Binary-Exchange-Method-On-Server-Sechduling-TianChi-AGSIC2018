@@ -94,6 +94,7 @@ olddata_app_interference_file = 'data/olddata/scheduling_preliminary_app_interfe
 
 outfile = open(refinedSolution_file, 'w')
 
+
 class App:
 
     def __init__(self, app_id, cpu, mem, disk, P, M, PM):
@@ -109,9 +110,10 @@ class App:
         self.avgCpu = np.mean(self.cpu)
         self.intimateApps = set([])
 
+
 class Job:
 
-    def __init__(self,job_id, cpu, mem, number_of_instance, execution_time, dependency_task_id, range_1, range_2 ):
+    def __init__(self, job_id, cpu, mem, number_of_instance, execution_time, dependency_task_id, range_1, range_2):
         self.id = job_id
         self.cpu = cpu
         self.mem = mem
@@ -120,6 +122,7 @@ class Job:
         self.dependency_task_id = dependency_task_id
         self.starttime = range_1
         self.endtime = range_2
+
 
 '''
 Machine class
@@ -337,7 +340,7 @@ class Machine:
         if(not compare):
             # logger.debug(inst_id+" fails to acllocate disk on "+ self.id)
             return False
-        
+
         # check  cpu
         compare = np.greater_equal(self.rcpu, curApp.cpu)
         compare = reduce(lambda x, y: x & y, compare)
@@ -358,8 +361,6 @@ class Machine:
         if(not compare):
             # logger.debug(inst_id+" fails to acllocate mem on "+ self.id)
             return False
-
-
 
         # check  P
         compare = self.rP >= curApp.P
@@ -465,7 +466,7 @@ class Machine:
     def ScoreChangeOfAddInst(self, inst_id):
         # Returns the increase in penalty score
         # after adding inst_id to the current machine
-        
+
         curApp = Apps[Insts[inst_id][0]]
         score = 0
         for rate in (self.cpu - (self.rcpu - curApp.cpu))/self.cpu:
@@ -473,9 +474,9 @@ class Machine:
         return score - self.score
 
     def ScoreChangeOfRemoveInst(self, inst_id):
-        # Returns the reduction in penalty score 
+        # Returns the reduction in penalty score
         # after shifting out inst_id to the current machine
-        
+
         curApp = Apps[Insts[inst_id][0]]
         score = 0
         if(len(self.insts) == 1):
@@ -486,20 +487,20 @@ class Machine:
         return score - self.score
 
     def VarianceChangeOfAddInst(self, inst_id):
-        
-        # Returns the increase in penalty score 
-        # after adding inst_id to the current machine 
+
+        # Returns the increase in penalty score
+        # after adding inst_id to the current machine
         # (the smaller the standard deviation, the better)
-       
+
         curApp = Apps[Insts[inst_id][0]]
         curVariance = np.std(self.cpu-(self.rcpu-curApp.cpu))
         return curVariance - self.stability
 
     def VarianceChangeOfRemoveInst(self, inst_id):
-        # Returns the change in machine stability 
-        # after moving inst_id to the current machine 
+        # Returns the change in machine stability
+        # after moving inst_id to the current machine
         # (the smaller the standard deviation, the better)
-        
+
         curApp = Apps[Insts[inst_id][0]]
         curVariance = np.std(self.cpu-(self.rcpu+curApp.cpu))
         return curVariance - self.stability
@@ -508,7 +509,7 @@ class Machine:
         # Change the upper limit of the current machine's CPU usage
         self.cputhreshold = threhold
 
-    # The following is an internal status update function 
+    # The following is an internal status update function
     # that does not need to be called externally.
     def ResetStatus(self):
         if len(self.insts) == 0:
@@ -528,7 +529,7 @@ class Machine:
             self.avgCpurate = 0  # np.mean((self.cpu-self.rcpu)/self.cpu)
 
     def UpdateStatus(self):
-        # Update the current machine status, 
+        # Update the current machine status,
         # including scores, stability, average utilization, etc.
 
         if(len(self.insts) == 0):
@@ -554,8 +555,9 @@ class Machine:
             self.scorenew = 0
         else:
             for rate in (self.cpu-self.rcpu)/self.cpu:
-                self.scorenew +=  self.alpha*(exp(rate-self.beta))
-        self.scorenew /= 98# print("number of grater than 0.5 {}".format(count))
+                self.scorenew += self.alpha*(exp(rate-self.beta))
+        # print("number of grater than 0.5 {}".format(count))
+        self.scorenew /= 98
         return True
 
 
@@ -567,6 +569,7 @@ def CaculateScore():
         score += Machines[machine].score
 
     return score
+
 
 def stable_compare(instl, instr):
     return Apps[Insts[instl][0]].stability - Apps[Insts[instr][0]].stability
@@ -710,3 +713,68 @@ def MoveInstToMachine(inst, target_machine):
         Machines[curMachine].RemoveIns(inst)
         Machines[target_machine].AddInst(inst)
         return Machines[curMachine].score + Machines[target_machine].score - curScore
+
+
+def GetRateOfAllMachine():
+    rate = np.zeros((1, 6000))
+    for machine, i in zip(Machines, range(len(Machines))):
+        rate[0, i] = Machines[machine].cpurate
+    return rate
+
+
+def GetUsefulMachineList():
+    machinelist = list(Machines)
+    for machineitem in machinelist:
+        if Machines[machineitem].use == 0:
+            machinelist.remove(machineitem)
+
+    return machinelist
+
+
+def Reallocate(inst_id, machinelist, machine_id=""):
+
+    randlist = random.sample(machinelist, len(machinelist))
+
+    for machine_id in randlist:
+        if Machines[machine_id].AvailableThreshold(inst_id) and Machines[machine_id].use == 1:
+            Machines[machine_id].AddInst(inst_id)
+            return machine_id
+    return ":"
+
+
+def Reallocatenew(inst_id, machine_id=""):
+
+    # machinelist = GetUsefulMachineList(Machines)
+    randlist = ["machine_{}".format(6000-i) for i in range(6000)]
+
+    for machine_id in randlist:
+        if Machines[machine_id].AvailableThreshold(inst_id) and Machines[machine_id].use == 1:
+            Machines[machine_id].AddInst(inst_id)
+            return machine_id
+    return ":"
+
+
+def NumberOfUsedMachine():
+    n_usemachine = 0
+    for mach in Machines:
+        if len(Machines[mach].insts) != 0:
+            n_usemachine += 1
+    return n_usemachine
+
+
+def caculatins():
+    num_ins = 0
+    for machine in Machines:
+        num_ins += len(Machines[machine].insts)
+
+    return num_ins
+
+
+def CheckInsNumInMachine(machine_name):
+    ins_set = Machines[machine_name].insts
+    return len(ins_set)
+
+
+def CutMachine(num):
+    for i in range(num):
+        Machines["machine_{}".format(i+1)].use = 0

@@ -7,55 +7,10 @@ import pickle
 
 import guro as g
 from loaddata import *
-from util import * 
+from util import *
+
 scorelist = {}
-
-allrate = np.zeros((3000,6000))
-
-def GetRateOfAllMachine():
-    rate = np.zeros((1,6000))
-    for machine,i in zip(Machines ,range(len(Machines))):
-        rate[0,i] = Machines[machine].cpurate
-    return rate
-def GetUsefulMachineList():
-    machinelist = list(Machines)
-    for machineitem in machinelist:
-        if Machines[machineitem].use == 0:
-            machinelist.remove(machineitem)
-
-    return machinelist
-
-
-def Reallocate(inst_id, machinelist, machine_id=""):
-
-    randlist = random.sample(machinelist, len(machinelist))
-
-    for machine_id in randlist:
-        if Machines[machine_id].AvailableThreshold(inst_id) and Machines[machine_id].use == 1:
-            Machines[machine_id].AddInst(inst_id)
-            return machine_id
-    return ":"
-
-
-def Reallocatenew(inst_id, machine_id=""):
-
-    # machinelist = GetUsefulMachineList(Machines)
-    randlist = ["machine_{}".format(6000-i) for i in range(6000)]
-
-    for machine_id in randlist:
-        if Machines[machine_id].AvailableThreshold(inst_id) and Machines[machine_id].use == 1:
-            Machines[machine_id].AddInst(inst_id)
-            return machine_id
-    return ":"
-
-
-def NumberOfUsedMachine():
-    n_usemachine = 0
-    for mach in Machines:
-        if len(Machines[mach].insts) != 0:
-            n_usemachine += 1
-    return n_usemachine
-
+allrate = np.zeros((3000, 6000))
 
 def LoadStep3(sort_ins_list):
 
@@ -194,7 +149,6 @@ def FindOptimal(firstone, lastone):
         print("put {} and {} to {}".format(
             firstone[0], lastone[0], firstone[0]))
         PutInOneMachine(o_machine)
-        
 
     else:
         if Machines[o_machine[0]].disk > Machines[o_machine[1]].disk:
@@ -209,16 +163,6 @@ def FindOptimal(firstone, lastone):
 
             # Machines[mach1].RemoveIns(ins)
             Machines[mach2].AddInst(ins)
-
-
-def CheckInsNumInMachine(machine_name):
-    ins_set = Machines[machine_name].insts
-    return len(ins_set)
-
-
-def CutMachine(num):
-    for i in range(num):
-        Machines["machine_{}".format(i+1)].use = 0
 
 
 def FindSatisfySolution():
@@ -242,29 +186,32 @@ def FindSatisfySolution():
 
 
 def SaveSatisfySolution(text):
-    f_Machines = open("initsolution"+text+'b_Machines.data', 'wb')
+    
+    f_Machines = open("initsolution/"+text+'b_Machines.data', 'wb')
     pickle.dump(Machines, f_Machines)
     f_Machines.close()
-    f_Insts = open("initsolution"+text+'b_Insts.data', 'wb')
+    f_Insts = open("initsolution/"+text+'b_Insts.data', 'wb')
     pickle.dump(Insts, f_Insts)
     f_Insts.close()
-    f_Apps = open("initsolution"+text+'b_Apps.data', 'wb')
+    f_Apps = open("initsolution/"+text+'b_Apps.data', 'wb')
     pickle.dump(Apps, f_Apps)
     f_Apps.close()
     allscore = CaculateScore()
+    
     print('finsh find satisfy,and score is {}'.format(allscore))
 
 
 def LoadSatisfySolution(text):
-    f_Machines = open("initsolution"+text+'b_Machines.data', 'rb')
+    
+    f_Machines = open("initsolution/"+text+'b_Machines.data', 'rb')
     # pickle.dump(Machines, f_Machines)
     Machines1 = pickle.load(f_Machines)
     f_Machines.close()
-    f_Insts = open("initsolution"+text+'b_Insts.data', 'rb')
+    f_Insts = open("initsolution/"+text+'b_Insts.data', 'rb')
     # pickle.dump(Insts, f_Insts)
     Insts1 = pickle.load(f_Insts)
     f_Insts.close()
-    f_App = open("initsolution"+text+'b_Apps.data', 'rb')
+    f_App = open("initsolution/"+text+'b_Apps.data', 'rb')
     # pickle.dump(Insts, f_Insts)
     Apps1 = pickle.load(f_App)
     f_App.close()
@@ -277,20 +224,12 @@ def LoadSatisfySolution(text):
         Apps[app] = Apps1[app]
 
 
-def caculatins():
-    num_ins = 0
-    for machine in Machines:
-        num_ins += len(Machines[machine].insts)
-
-    return num_ins
-
-
 def ReduceMachine(cutthre):
     global scorelist
     leavemachinelist = []
     aimlist = []
     numberofcut = 0
-    
+
     for machine in scorelist:
         if Machines[machine].use == 1:
             if int(machine.split('_')[1]) < cutthre:
@@ -334,7 +273,8 @@ def ReduceMachine(cutthre):
 
     return numberofcut
 
-def OptimalBinaryExchangeMethod(gap,cutthre,loop):
+
+def OptimalBinaryExchangeMethod(gap, cutthre, loop):
     global scorelist
 
     firstscore = scorelist[min(scorelist, key=scorelist.get)]
@@ -344,10 +284,10 @@ def OptimalBinaryExchangeMethod(gap,cutthre,loop):
     lastscorelist = []
 
     for mach in scorelist.keys():
-        gaap =  (lastscore - firstscore) * loop/10000 *1.5
-        if scorelist[mach] <= firstscore + gaap  :
+        gaap = (lastscore - firstscore) * loop/10000 * 1.5
+        if scorelist[mach] <= firstscore + gaap:
             firstscorelist.append([mach, firstscore])
-        if scorelist[mach] >= lastscore - gaap :
+        if scorelist[mach] >= lastscore - gaap:
             lastscorelist.append([mach, lastscore])
 
     firstscorenumber = len(firstscorelist)
@@ -374,32 +314,36 @@ def OptimalBinaryExchangeMethod(gap,cutthre,loop):
 # def HistoryRecord():
 
 
-def Optimization(his,cutthre):
+def Optimization(his, cutthre):
+    # the main method of OBEM
 
-    global scorelist
-    mach_history = []
     scoreall_history = []
 
+    # set threshold of all machine to 1 for find the satisfy solution as soon as possible 
     Globalthreshold = 1
     for machine in Machines:
         Machines[machine].IncreaseThreshold(Globalthreshold)
 
+    # use the scorelist to record the score of all the machine 
+    global scorelist
     for machine in Machines:
         if len(Machines[machine].insts) != 0:
             Machines[machine].UpdateScore()
             scorelist[machine] = Machines[machine].score
 
+    # the main loop of optimal 
     for loop in range(10000):
-        gap = 0.000 + loop/(100000) 
-        firstone, lastone, firstscorenumber, lastscorenumber = OptimalBinaryExchangeMethod(gap,cutthre,loop)
+        
+        # set the gap as parmater
+        gap = 0.000 + loop/(100000)
+        # use the OBEM do one exchange   
+        firstone, lastone, firstscorenumber, lastscorenumber = OptimalBinaryExchangeMethod(
+            gap, cutthre, loop)
 
-        # 如果机器里没有ins，则移除ins
-
-            #  print('remove {}'.format(lastone[0]))
-
+        # Remove the machine every 500 loop 
         if loop % 500 == 1:
             scoreall = CaculateScore()
-            
+
             cpuuse = 0
             memuse = 0
             diskuse = 0
@@ -411,8 +355,8 @@ def Optimization(his,cutthre):
             meanmem = np.mean(memneed/memuse)
             meandisk = np.mean(diskneed/diskuse)
             his.append([scoreall, len(scorelist), firstscorenumber,
-                        lastscorenumber,  meancpu ,meanmem , meandisk,np.std(scoreall_history)] )
-            allrate[loop//50,:] = GetRateOfAllMachine()
+                        lastscorenumber,  meancpu, meanmem, meandisk, np.std(scoreall_history)])
+            allrate[loop//50, :] = GetRateOfAllMachine()
 
             if len(scoreall_history) > 3:
                 scoreall_history.pop(0)
@@ -420,15 +364,16 @@ def Optimization(his,cutthre):
             else:
                 scoreall_history.append(scoreall)
 
-            putlog = open('outlog', 'a')
+            putlog = open('log/outlog', 'a')
             putlog.write('loop:{} score:{} group good: {} group bad:{} machine:{} CPU:{} MEM:{} DISK:{}  \n'.format(loop,
-                                                                                              scoreall, firstscorenumber, lastscorenumber, len(scorelist), meancpu ,meanmem , meandisk ))
+                                                                                                                    scoreall, firstscorenumber, lastscorenumber, len(scorelist), meancpu, meanmem, meandisk))
             putlog.close()
 
+        # print the status every 1000 loop
         if loop % 1000 == 1:
             # assert(caculatins() == 68219)
             print('loop:{} \tscore:{} \tgroup good: {} \tgroup bad:{} \tmachine:{} \t std {}'.format(loop,
-                                                                                           scoreall, firstscorenumber, lastscorenumber, len(scorelist),np.std(scoreall_history) ))
+                                                                                                     scoreall, firstscorenumber, lastscorenumber, len(scorelist), np.std(scoreall_history)))
 
             # print(scoreall_history, np.std(scoreall_history))
             if np.std(scoreall_history) < 20 and len(scoreall_history) > 3:
@@ -438,31 +383,3 @@ def Optimization(his,cutthre):
                 #     ReduceMachine(cutthre)
                 #     ReduceMachine(cutthre)
     return 0
-
-
-if __name__ == '__main__':
-    import sys
-    
-    # text = sys.argv[1]
-    text = 'oldb'
-    print(text)
-    his = []
-    sort_ins_list = Loaddata(text)
-    for ins in Insts:
-        cpuneed += Apps[Insts[ins][0]].cpu
-        memneed += Apps[Insts[ins][0]].mem
-        diskneed += Apps[Insts[ins][0]].disk
-
-    cutthre  = 5000
-    if text == 'a':
-        cutthre = 8000
-
-    FindSatisfySolution()
-    SaveSatisfySolution(text)
-    # LoadSatisfySolution(text)
-    Optimization(his,cutthre)
-
-    his = np.array(his)
-    np.savetxt(text+'.csv', his, delimiter=',')
-    np.savetxt('TY'+text+'rate.csv', allrate, delimiter=',')
-
