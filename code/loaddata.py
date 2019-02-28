@@ -6,7 +6,7 @@ global zzl_solution_file_a
 
 
 def ReadAppResources(app_resources_file):
-    # app resource
+    # this function read theapp resource
     app_resfile = open(app_resources_file)
     for line in app_resfile:
         line = line.strip('\n')
@@ -25,12 +25,11 @@ def ReadAppResources(app_resources_file):
 
 
 def ReadJobInformation(job_info_file_a):
-    # app resource
+    # this function read the job information
     app_resfile = open(job_info_file_a)
     for line in app_resfile:
         line = line.strip('\n')
         part1, part2 = line.split('|')
-
         vec_resource = part1.split(',')
         job_id = vec_resource[0]
         cpu = float(vec_resource[1])
@@ -49,7 +48,8 @@ def ReadJobInformation(job_info_file_a):
 
 
 def ReadMachineResources(machine_resources_file_a):
-    # machine resource
+    # this function read the machine resources and
+    # put it into the dict Machine
     machine_resfile = open(machine_resources_file_a)
     for line in machine_resfile:
         line = line.strip('\n')
@@ -68,7 +68,8 @@ def ReadMachineResources(machine_resources_file_a):
 
 
 def ReadInferrence(app_interference_file):
-    # machine resource
+    # this function read the machine resources and
+    # put it into the dict Machine
     inferrence_file = open(app_interference_file)
     for line in inferrence_file:
         line = line.strip('\n')
@@ -81,10 +82,10 @@ def ReadInferrence(app_interference_file):
 
 
 def ReadDeploy(inst_deploy_file_a):
-    # 读取Inst部署的情况
-    # 全局变量表示已提前部署的inst
+    # Read the Inst deployment
+    # Global variables indicate insts that have been deployed in advance
     PreDeploy
-    # 全局变量表示未提前部署的inst
+    # Global variables indicate insts that are not deployed in advance
     NonDeploy
     deploy_file = open(inst_deploy_file_a)
     for line in deploy_file:
@@ -103,6 +104,9 @@ def ReadDeploy(inst_deploy_file_a):
 
 
 def CheckConstraint():
+    # this function used in debug
+    # to check wheather the start station satisfy the constraint 
+    
     for machine in Deployments:
         # print(machine)
         localInsts = Deployments[machine]
@@ -188,7 +192,8 @@ def CheckConstraint():
 
 
 def Loaddata(text):
-    
+    # the main loaddata function used in this page.
+    # text can be olda, oldb, a, b, c, d, e
     if text == 'olda':
         olddata_app_interference_file = './../data/data-a/scheduling_preliminary_app_interference_20180606.csv'
         olddata_app_resources_file = './../data/data-a/scheduling_preliminary_app_resources_20180606.csv'
@@ -216,10 +221,13 @@ def Loaddata(text):
         ReadDeploy(olddata_inst_deploy_file)
         # ReadJobInformation()
     else:
-        olddata_app_interference_file = './../data/instance_deploy.{}.csv'.format(text)
+        olddata_app_interference_file = './../data/instance_deploy.{}.csv'.format(
+            text)
         olddata_app_resources_file = './../data/app_resources.csv'
-        olddata_machine_resources = './../data/machine_resources.{}.csv'.format(text)
-        olddata_inst_deploy_file = './../data/instance_deploy.{}.csv'.format(text)
+        olddata_machine_resources = './../data/machine_resources.{}.csv'.format(
+            text)
+        olddata_inst_deploy_file = './../data/instance_deploy.{}.csv'.format(
+            text)
         zzl_solution_file_a = "./submit/solution_oldb.csv"
 
         # sort_ins_list = np.loadtxt('inssort/sort' + text + '.txt')
@@ -229,5 +237,4 @@ def Loaddata(text):
         ReadDeploy(olddata_inst_deploy_file)
         # ReadJobInformation()
 
-
-    return Apps,Machines,Insts
+    return Apps, Machines, Insts
